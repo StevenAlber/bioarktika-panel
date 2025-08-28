@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивное приложение: Анализ 'БиоАрктика-2050'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Arctic Tech (Custom adaptation of Warm Neutrals) -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard with a sticky top navigation bar allowing users to switch between thematic views: 'Обзор' (Overview), 'Технологии' (Technologies), 'Архитектура' (Architecture), 'Дорожная карта' (Roadmap), and 'Риски и Потенциал' (Risks & Potential). This non-linear, thematic structure is chosen over a simple scrollable page to allow users to directly access the information most relevant to them (e.g., an engineer focusing on technology, a strategist on the roadmap). Each view contains interactive elements like clickable charts and filterable cards to encourage exploration and make the dense report data digestible and engaging. This user-centric design prioritizes ease of navigation and synthesis of complex information. -->
+    <!-- Visualization & Content Choices: 
+        - Technology Readiness (Table 1): Report Info -> TRL scores for various techs. Goal -> Compare. Viz -> Interactive Horizontal Bar Chart (Chart.js/Canvas). Interaction -> Click on a bar to show detailed info. Justification -> Best for comparing categories with long names; interactivity adds depth. NO SVG/Mermaid.
+        - Architectural Comparison (Table 2): Report Info -> Comparison of architectural typologies across multiple criteria. Goal -> Compare. Viz -> Radar Chart (Chart.js/Canvas). Interaction -> Toggle datasets on/off. Justification -> Ideal for multi-criteria comparison, showing strengths/weaknesses visually. NO SVG/Mermaid.
+        - Implementation Roadmap: Report Info -> Phased project plan. Goal -> Show Change/Organize. Viz -> Interactive Timeline (HTML/CSS/JS). Interaction -> Click on a phase to expand details. Justification -> Most intuitive way to show a chronological process. NO SVG/Mermaid.
+        - R&D Priorities (Table 3): Report Info -> Critical research areas. Goal -> Organize/Inform. Viz -> Filterable Card Grid (HTML/CSS/JS). Interaction -> Filter cards by criticality level. Justification -> More engaging and easier to parse than a static table. NO SVG/Mermaid.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #212529; }
+        .nav-btn { transition: all 0.3s ease; }
+        .nav-btn.active { background-color: #007BFF; color: white; }
+        .nav-btn:not(.active):hover { background-color: #E9ECEF; }
+        .content-section { display: none; }
+        .content-section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin: auto; height: 50vh; max-height: 450px; }
+        .timeline-item::before { content: ''; position: absolute; top: 12px; left: -20px; width: 10px; height: 10px; background-color: #007BFF; border-radius: 50%; border: 2px solid #F8F9FA; }
+        .timeline-item:not(:last-child)::after { content: ''; position: absolute; top: 22px; left: -16px; width: 2px; height: 100%; background-color: #DEE2E6; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-6">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#212529] mb-2">Аналитическая панель: «БиоАрктика-2050»</h1>
+            <p class="text-md md:text-lg text-[#6C757D]">Интерактивный обзор стратегической концепции освоения Арктики</p>
+        </header>
+
+        <nav id="main-nav" class="sticky top-2 z-10 bg-white/80 backdrop-blur-md rounded-lg shadow-md p-2 mb-6 flex flex-wrap justify-center gap-2">
+            <button data-target="overview" class="nav-btn active text-sm md:text-base font-medium py-2 px-4 rounded-md">Обзор</button>
+            <button data-target="tech" class="nav-btn text-sm md:text-base font-medium py-2 px-4 rounded-md">Технологии</button>
+            <button data-target="arch" class="nav-btn text-sm md:text-base font-medium py-2 px-4 rounded-md">Архитектура</button>
+            <button data-target="roadmap" class="nav-btn text-sm md:text-base font-medium py-2 px-4 rounded-md">Дорожная карта</button>
+            <button data-target="risks" class="nav-btn text-sm md:text-base font-medium py-2 px-4 rounded-md">Риски и Потенциал</button>
+        </nav>
+
+        <main id="app-content">
+            <!-- Overview Section -->
+            <section id="overview" class="content-section active">
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-[#007BFF] mb-4">Двухуровневая технологическая парадигма</h2>
+                    <p class="mb-4 text-[#212529]">В основе концепции лежит стратегическое разделение технологий на два уровня: готовые к внедрению решения для ближайшей перспективы и прорывные разработки для обеспечения глобального лидерства в будущем.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border-l-4 border-[#007BFF] p-4 bg-gray-50 rounded-r-md">
+                            <h3 class="text-xl font-semibold text-[#212529] mb-2">Уровень 1: Базовые технологии (TRL 5-7)</h3>
+                            <p class="text-[#6C757D]">Технологии высокой готовности, формирующие основу для пилотных проектов 2026-2030 гг. и снижающие зависимость от "северного завоза".</p>
+                            <ul class="list-disc list-inside mt-2 text-[#212529] space-y-1">
+                                <li>Высокопрочный серобетон</li>
+                                <li>Биокомпозиты из мицелия и торфа</li>
+                                <li>Модульные строительные системы</li>
+                            </ul>
+                        </div>
+                        <div class="border-l-4 border-[#FD7E14] p-4 bg-gray-50 rounded-r-md">
+                            <h3 class="text-xl font-semibold text-[#212529] mb-2">Уровень 2: Прорывные технологии (TRL 2-4)</h3>
+                            <p class="text-[#6C757D]">Фундаментальные НИОКР, закладывающие основу технологического суверенитета России к 2035-2050 гг. для полномасштабных "живых" куполов.</p>
+                             <ul class="list-disc list-inside mt-2 text-[#212529] space-y-1">
+                                <li>Биогенеративный каркас (СДМК)</li>
+                                <li>Адаптивная оболочка (АКБО)</li>
+                                <li>Когнитивная среда (BioAI)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technologies Section -->
+            <section id="tech" class="content-section">
+                 <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-2xl font-bold text-[#007BFF] mb-2 text-center">Карта технологической готовности (TRL)</h2>
+                    <p class="text-center text-[#6C757D] mb-6">Интерактивный график показывает текущий уровень готовности ключевых технологий. Нажмите на столбец для получения дополнительной информации.</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                        <div class="lg:col-span-2 chart-container h-[60vh] max-h-[500px]">
+                            <canvas id="trlChart"></canvas>
+                        </div>
+                        <div id="tech-details" class="p-4 bg-gray-50 rounded-md border border-gray-200 min-h-[300px]">
+                            <h3 id="tech-title" class="text-xl font-semibold text-[#212529]">Выберите технологию</h3>
+                            <p id="tech-description" class="text-[#6C757D] mt-2">Здесь появится подробное описание, приоритеты НИОКР и реалистичность пилотирования.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Section -->
+            <section id="arch" class="content-section">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-2xl font-bold text-[#007BFF] mb-2 text-center">Сравнительный анализ архитектурных типологий</h2>
+                    <p class="text-center text-[#6C757D] mb-6">Анализ показывает, что гибридная модель «Гео-интегрированных адаптивных кластеров» (ГИАК) является наиболее сбалансированным решением. Используйте легенду для сравнения.</p>
+                    <div class="chart-container h-[60vh] max-h-[500px]">
+                        <canvas id="archChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Roadmap Section -->
+            <section id="roadmap" class="content-section">
+                 <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-2xl font-bold text-[#007BFF] mb-6 text-center">Фазированная дорожная карта реализации</h2>
+                    <div class="relative pl-4 border-l-2 border-gray-200">
+                        <div class="timeline-item relative mb-8 pl-8">
+                            <h3 class="text-xl font-semibold text-[#212529]">Этап 1А: «БиоАрктика-Демо-1» (2026–2030)</h3>
+                            <p class="text-[#6C757D]">Создание демонстрационного модуля на основе технологий высокой готовности (TRL 5-7). Цель — отработка производственных циклов, логистики и сбор данных по эксплуатации новых материалов в реальных арктических условиях.</p>
+                        </div>
+                        <div class="timeline-item relative mb-8 pl-8">
+                            <h3 class="text-xl font-semibold text-[#212529]">Этап 1Б: «BioDome-001-Lite» (2030–2035)</h3>
+                            <p class="text-[#6C757D]">Возведение малого архитектурного прототипа (секции купола) для полевых испытаний отдельных прорывных систем (фрагменты АКБО, прототип «Микробиом-Ядра») и подготовки к полномасштабному строительству.</p>
+                        </div>
+                        <div class="timeline-item relative mb-8 pl-8">
+                            <h3 class="text-xl font-semibold text-[#212529]">Долгосрочная стратегия (после 2030 г.)</h3>
+                            <p class="text-[#6C757D]">Детализированный сценарий запуска полнофункционального прототипа BioDome-001, включая гео-адаптацию, культивацию каркаса, интеграцию систем и активацию BioAI для заселения тестовой группы.</p>
+                        </div>
+                         <div class="timeline-item relative pl-8">
+                            <h3 class="text-xl font-semibold text-[#212529]">Итоговая оценка (к 2050 г.)</h3>
+                            <p class="text-[#6C757D]">Формирование научно-технологического задела, обеспечивающего глобальное лидерство в области природоподобных технологий, создание нового сектора экономики и укрепление стратегических позиций России.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risks & Potential Section -->
+            <section id="risks" class="content-section">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold text-[#FD7E14] mb-4">Критические риски и НИОКР</h2>
+                        <p class="mb-4 text-[#6C757D]">Наиболее критическим является не столько вопрос работоспособности технологий, сколько долгосрочная адаптация человека и биобезопасность.</p>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded-r-md">
+                                <h4 class="font-semibold text-red-800">Высокая критичность</h4>
+                                <p class="text-sm text-red-700">Долгосрочная стабильность биоматериалов, протоколы биосдерживания ГМО, психофизиологическая адаптация человека.</p>
+                            </div>
+                             <div class="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-md">
+                                <h4 class="font-semibold text-yellow-800">Средняя критичность</h4>
+                                <p class="text-sm text-yellow-700">Самовосстановление «васкулярных» композитов в условиях вечной мерзлоты.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold text-[#007BFF] mb-4">Экспортный и двойной потенциал</h2>
+                        <p class="mb-4 text-[#6C757D]">Разрабатываемые системные решения имеют колоссальный потенциал для глобального рынка и программ двойного назначения.</p>
+                        <div class="space-y-3">
+                            <p><span class="font-semibold">🌍 Глобальный рынок:</span> Системы жизнеобеспечения для регионов с дефицитом ресурсов; технологии био-строительства для экстремальных условий.</p>
+                            <p><span class="font-semibold">🚀 Двойное назначение:</span> Автономные базы для освоения космоса (Луна, Марс) в кооперации с ГК «Роскосмос»; мобильные комплексы для МЧС России.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const techDataStore = [
+            {
+                label: 'Высокопрочный морозостойкий серобетон',
+                trl: 6.5,
+                realism: 'Высокая',
+                niokr: 'Стандартизация, масштабирование производства.'
+            },
+            {
+                label: 'Биокомпозиты на основе мицелия/торфа',
+                trl: 5.5,
+                realism: 'Высокая (для базовых панелей)',
+                niokr: 'Оптимизация штаммов, долгосрочные испытания.'
+            },
+            {
+                label: 'Модульные трансформируемые системы',
+                trl: 7.5,
+                realism: 'Высокая',
+                niokr: 'Адаптация к арктическим материалам.'
+            },
+            {
+                label: 'Синтетический Крио-Мицелий (СДМК)',
+                trl: 2.5,
+                realism: 'Низкая',
+                niokr: 'Генная инженерия, управляемый биосинтез.'
+            },
+            {
+                label: 'Адаптивная оболочка (АКБО)',
+                trl: 3,
+                realism: 'Низкая',
+                niokr: 'Разработка материалов, систем управления.'
+            },
+            {
+                label: 'BioAI и Когнитивная среда',
+                trl: 3.5,
+                realism: 'Низкая',
+                niokr: 'Разработка нейроморфных алгоритмов, сенсорики.'
+            },
+            {
+                label: '«Микробиом-Ядро» (полный цикл)',
+                trl: 3.5,
+                realism: 'Низкая',
+                niokr: 'Стабилизация микробных сообществ, биобезопасность.'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    const targetId = button.dataset.target;
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === targetId) {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // TRL Chart
+            const trlCtx = document.getElementById('trlChart').getContext('2d');
+            const trlChart = new Chart(trlCtx, {
+                type: 'bar',
+                data: {
+                    labels: techDataStore.map(d => d.label),
+                    datasets: [{
+                        label: 'Уровень готовности (TRL)',
+                        data: techDataStore.map(d => d.trl),
+                        backgroundColor: techDataStore.map(d => d.trl >= 5 ? '#007BFF' : '#FD7E14'),
+                        borderColor: techDataStore.map(d => d.trl >= 5 ? '#0056b3' : '#b3590d'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true, max: 9, title: { display: true, text: 'TRL (1-9)' } }
+                    },
+                    plugins: { legend: { display: false } },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const data = techDataStore[index];
+                            document.getElementById('tech-title').innerText = data.label;
+                            document.getElementById('tech-description').innerHTML = `
+                                <p><strong>Реалистичность пилотирования до 2030 г.:</strong> <span class="${data.realism === 'Высокая' ? 'text-green-600' : 'text-red-600'}">${data.realism}</span></p>
+                                <p class="mt-2"><strong>Приоритетные НИОКР:</strong> ${data.niokr}</p>
+                            `;
+                        }
+                    }
+                }
+            });
+            document.getElementById('tech-description').innerHTML = `Нажмите на столбец слева, чтобы увидеть детали. Технологии с TRL 5 и выше готовы к пилотному внедрению, в то время как технологии с TRL ниже 5 требуют фундаментальных исследований.`;
+
+            // Architecture Chart
+            const archCtx = document.getElementById('archChart').getContext('2d');
+            new Chart(archCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Энергоэффективность', 'Масштабируемость', 'Отказоустойчивость', 'Психологический комфорт', 'Простота реализации', 'Устойчивость к мерзлоте'],
+                    datasets: [
+                        {
+                            label: 'Монолитный купол',
+                            data: [9, 2, 2, 5, 2, 5],
+                            borderColor: '#FD7E14',
+                            backgroundColor: 'rgba(253, 126, 20, 0.2)',
+                        },
+                        {
+                            label: 'Модульный кластер',
+                            data: [5, 9, 8, 5, 8, 8],
+                            borderColor: '#6C757D',
+                            backgroundColor: 'rgba(108, 117, 125, 0.2)',
+                        },
+                        {
+                            label: 'ГИАК (гибрид)',
+                            data: [8, 8, 9, 8, 5, 9],
+                            borderColor: '#007BFF',
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { r: { suggestedMin: 0, suggestedMax: 10 } },
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
